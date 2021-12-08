@@ -13,11 +13,15 @@
       <input type="button" value="撤销悔棋" class="undo" @click="undo()" />
       <input type="button" :value="toggle ? '切换dom' : '切换canvas'" class="toggle" @click="toggleF()" />
     </div> -->
-    <div>
-      <input type="button" value="白子" class="restart" @click="clickColor('white')" />
-      <input type="button" value="黑子" class="restart" @click="clickColor('black')" />
-      <input type="button" value="开始" class="restart" @click="restartInit()" />
+    <div v-if="color == ''">
+      <input type="button" v-if="changeedColor != 'white'" value="白子" class="restart" @click="clickColor('white')" />
+      <input type="button" v-if="changeedColor != 'black'" value="黑子" class="restart" @click="clickColor('black')" />
     </div>
+    <div v-else >
+    已选择 {{this.color}}
+    <input type="button" v-if="changeedColor != 'white'" value="重新选择" class="restart" @click="color = ''" />
+    </div>
+    <input type="button" value="重新开始" class="restart" @click="restartInit()" />
     <div class="main">
       <canvas v-show="toggle" id="myCanvas" ref="canvas" width="480" height="480">当前浏览器不支持Canvas</canvas>
       <div v-show="!toggle" id="chess" ref="chessBox">
@@ -36,6 +40,7 @@ export default {
   data() {
     return {
       color: '',
+      changeedColor: '',
       userId: this.WebSocket.userId,
       tabbars: [
         {
@@ -64,7 +69,7 @@ export default {
         [1, -1] //右斜线
       ],
       flag: false,
-      downFlag: false,
+      downFlag: true,
       victory: '',
       history: [], //历史记录位置
       historyVal: [], //历史记录不被删除数组
@@ -123,7 +128,7 @@ export default {
           })
           this.stepHistory++
           console.log('this.history', this.history)
-          //检查当前玩家是否赢了游戏
+          // 检查当前玩家是否赢了游戏
           for (var i = 0; i < 4; i++) {
             this.checkWin(dx / 30 - 1, dy / 30 - 1, this.pieceColor[this.step % 2], this.checkMode[i])
           }
@@ -135,8 +140,17 @@ export default {
     }
   },
   methods: {
-    clickColor(color){
+    clickColor(color) {
       this.color = color
+      var d = {
+        color: color
+      }
+      var data = {
+        type: 'changeColor',
+        data: d
+      }
+      console.log(data)
+      this.WebSocket.send(JSON.stringify(data))
     },
     toggleF() {
       this.toggle = !this.toggle
@@ -418,8 +432,8 @@ export default {
     },
     downPieceOwn(_this, m, n, color) {
       console.log(this.downFlag)
-      if(this.downFlag){
-        return 
+      if (this.downFlag) {
+        return
       }
       console.log(this.WebSocket.ws)
       let that = this
@@ -430,33 +444,18 @@ export default {
       //判断游戏是否结束
       if (!that.flag) {
         if (that.pieceMapArr[m][n] == 0) {
-          // console.log('that.step', that.step);
-          that.downPiece(_this, m, n, color)
-          // var data= {
-          //   'placeX':m,
-          //   'placeY':n,
-          //   'pieceColor': color,
-          //   'pieceNum': that.step,
-          //   'userId': that.userId
-          // }
-          // request({
-          //   url: '/api/goBangPiece/add',
-          //   method: 'post',
-          //   data: data
-          // }).then(({data}) => {
-          //   that.downFlag = true
-          // })
           var d = {
-            'x': m,
-            'y': n,
-            'color': color,
+            x: m,
+            y: n,
+            color: color
           }
           var data = {
-            'type': 'downPiece',
-            'data': d
+            type: 'downPiece',
+            data: d
           }
           console.log(data)
           that.WebSocket.send(JSON.stringify(data))
+          that.downPiece(_this, m, n, color)
           that.downFlag = true
         } else {
           alert('不能落在有棋子的地方！')
@@ -520,16 +519,22 @@ export default {
       console.log(event)
       var sendData = JSON.parse(event.data)
       console.log(sendData)
-      if (sendData.type == 'downPiece') {
+      if (sendData.type == 'downPiece') { // 落子
         var data = sendData.data
         console.log(data)
-        if(data.color == this.color){
-          return 
+        if (data.color == this.color) {
+          return
         }
         console.log(data.x)
         console.log(data.y)
         this.downPiece(document.getElementById(data.x + '_' + data.y), data.x, data.y, data.color)
-        this.downFlag=false
+        this.downFlag = false
+      } else if (sendData.type == 'changeColor'){ // 对方选择颜色
+        var data = sendData.data
+        if(data.color == this.color){
+          return 
+        }
+        this.changeedColor = data.color
       }
       // document.getElementById('message').innerHTML = event.data + '\n'
     },
@@ -622,11 +627,11 @@ body {
 #box01 .qz {
   /* width: 28px;
 				height: 28px; */
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   /* width: 30px;
   height: 30px; */
-  border: 0px solid #c7c7c7;
+  border: 1px solid rgba(209, 156, 87, 0);
   float: left;
   border-radius: 50%;
   /* margin: 1px; */
