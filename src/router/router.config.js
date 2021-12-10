@@ -28,8 +28,13 @@ export const constantRouterMap = [
   },
   {
     path: '/aaa',
-    name: 'AAA',
+    name: 'aaa',
     component: () => import('@/views/game/golang/golang'),
     meta: { title: '关于我', keepAlive: false }
+  },
+  {
+    path: '/goBangHall',
+    name: 'goBangHall',
+    component: () => import('@/views/game/golang/goBangHall')
   }
 ]

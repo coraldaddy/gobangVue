@@ -55,7 +55,7 @@ module.exports = {
     proxy: {
       //配置跨域
       '/api': {
-          target: "http://127.0.0.1:8080",
+          target: "http://127.0.0.1:9528",
           // ws:true,
           changOrigin:true,
           pathRewrite:{

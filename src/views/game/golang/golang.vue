@@ -13,13 +13,20 @@
       <input type="button" value="撤销悔棋" class="undo" @click="undo()" />
       <input type="button" :value="toggle ? '切换dom' : '切换canvas'" class="toggle" @click="toggleF()" />
     </div> -->
-    <div v-if="color == ''">
+    <div>
+      当前房间号： {{roomId}}，当前房间人数： {{num}}
+    </div>
+    <input type="button"  value="退出" class="restart" @click="back()" />
+    <div v-if="color == '' && num == 2">
       <input type="button" v-if="changeedColor != 'white'" value="白子" class="restart" @click="clickColor('white')" />
       <input type="button" v-if="changeedColor != 'black'" value="黑子" class="restart" @click="clickColor('black')" />
     </div>
-    <div v-else >
-    已选择 {{this.color}}
-    <input type="button" v-if="changeedColor != 'white'" value="重新选择" class="restart" @click="color = ''" />
+    <div v-if="color != '' && num == 2" >
+      已选择 {{this.color}}
+      <input type="button" v-if="color != ''" value="重新选择" class="restart" @click="color = ''" />
+    </div>
+    <div v-if=" num < 2" >
+      请等待好友进入
     </div>
     <input type="button" value="重新开始" class="restart" @click="restartInit()" />
     <div class="main">
@@ -75,7 +82,9 @@ export default {
       historyVal: [], //历史记录不被删除数组
       stepHistory: 0,
       domPiece: [], //
-      toggle: true //true为canvas,false为dom
+      toggle: true, //true为canvas,false为dom
+      roomId: '',
+      num: 0
     }
   },
   components: {
@@ -83,6 +92,11 @@ export default {
   },
   created: function () {
     console.log('created')
+    console.log(this.$route.params)
+    this.roomId = this.$route.params.roomId
+    if(this.roomId == '' || this.roomId == null){
+      this.$router.push('/home')
+    }
     this.init()
     // console.log(this.WebSocket.ws)
   },
@@ -139,7 +153,18 @@ export default {
       })
     }
   },
+  beforeDestroy() {
+    // this.WebSocket.ws.close()
+  },
   methods: {
+    back(){
+      var data = {
+        type:'outRoom',
+        roomId: this.roomId
+      }
+      this.WebSocket.send(data)
+      this.$router.push('goBangHall')
+    },
     clickColor(color) {
       this.color = color
       var d = {
@@ -148,6 +173,11 @@ export default {
       var data = {
         type: 'changeColor',
         data: d
+      }
+      if(color == 'black'){
+        this.downFlag = false
+      }else{
+        // this.downFlag = true
       }
       console.log(data)
       this.WebSocket.send(JSON.stringify(data))
@@ -506,13 +536,34 @@ export default {
       // }
     },
     init() {
-      // this.socket = new WebSocket('ws://localhost:8080/websocket/dictSocket')
-      // this.socket.onopen = this.open
-      //           // 监听socket错误信息
-      //           this.socket.onerror = this.error
-      //           // 监听socket消息
-      //           this.socket.onmessage = this.onmessage
-      this.WebSocket.ws.onmessage = this.onmessage
+      this.localSocket()
+      console.log(this.WebSocket.ws)
+    },
+    localSocket(){
+      let that = this
+      if("WebSocket" in window){
+        if(that.roomId == '' || that.roomId == null){
+          return
+        }
+        // that.ws = new WebSocket('ws://127.0.0.1:9528/websocket/dictSocket/'+that.WebSocket.userId+'/'+that.roomId)
+        that.ws = new WebSocket('ws://127.0.0.1:9528/websocket/dictSocket/'+that.WebSocket.userId)
+        that.WebSocket.setWs(that.ws)
+        that.WebSocket.ws.onopen = function(){
+          console.log('websocket链接成功！')
+        }
+        // that.ws.onmessage = function(event){
+        //   console.log(event)
+        // }
+        that.WebSocket.ws.onclose = function(){
+          console.log('链接断开')
+          setTimeout(() => {
+            that.localSocket()
+          }, 2000);
+        }
+        this.WebSocket.ws.onmessage = this.onmessage
+      } else {
+        console.log('不支持webSocket')
+      }
     },
     onmessage(event) {
       console.log('进来了')
@@ -535,6 +586,13 @@ export default {
           return 
         }
         this.changeedColor = data.color
+      } else if (sendData.type == 'userNum'){ // 当前用户
+        var data = sendData.data
+        this.num = data.num
+        if(this.num < 2){
+          this.color = ''
+          this.changeedColor = ''
+        }
       }
       // document.getElementById('message').innerHTML = event.data + '\n'
     },
@@ -571,6 +629,7 @@ body {
   margin-bottom: 1rem;
 }
 .main {
+  /* background-color: bisque; */
   background-color: bisque;
   /* width: 30rem; */
 }

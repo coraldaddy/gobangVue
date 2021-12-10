@@ -7,13 +7,13 @@
 export default {
   name: 'App',
   created(){
-    this.localSocket()
+    // this.localSocket()
   },
   methods:{
-    localSocket(){
+    localSocket(){ // 2083  963
       let that = this
       if("WebSocket" in window){
-        that.ws = new WebSocket('ws://localhost:8080/websocket/dictSocket/'+that.WebSocket.userId)
+        that.ws = new WebSocket('ws://127.0.0.1:9528/websocket/dictSocket/'+that.WebSocket.userId)
         that.WebSocket.setWs(that.ws)
         that.WebSocket.ws.onopen = function(){
           console.log('websocket链接成功！')

@@ -24,7 +24,10 @@ import websocket from './config/websocket'
 // filters
 import './filters'
 import $ from 'jquery'
+import { Col, Row } from 'vant';
 
+Vue.use(Col);
+Vue.use(Row);
 Vue.config.productionTip = false
 Vue.prototype.WebSocket = websocket
 new Vue({

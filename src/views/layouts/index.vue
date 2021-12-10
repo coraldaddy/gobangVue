@@ -4,6 +4,7 @@
     <button @click="send()">Send</button>
     <button @click="closeWebSocket()">Close</button>
     <div id="message"></div>
+    <input id="roomId" type="text" v-model="roomId" />
     <van-button type="primary" @click="goLang()">Italk</van-button>
     <!-- <h2 class="h2Title">五子棋</h2>
     <h3>{{ victory }}</h3>
@@ -43,7 +44,8 @@ export default {
           },
           icon: 'user-o'
         }
-      ]
+      ],
+      roomId:''
     }
   },
   components: {
@@ -61,7 +63,11 @@ export default {
       //     method: 'post',
       //     data: {}
       //   }).then(({data}) => {})
-      this.$router.push('/aaa')
+      // if(this.roomId){
+      //   console.log(this.roomId)
+      //   this.$router.push({ name: 'aaa', params: { roomId: this.roomId }})
+      // }
+      this.$router.push('goBangHall')
     },
     send() {
       console.log(this.WebSocket.ws)
